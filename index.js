@@ -5,6 +5,7 @@ const app = express();
 const cors = require('cors');
 dotenv.config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 
 const PORT = process.env.PORT;
 
@@ -20,6 +21,26 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     },
 });
+const JWKS = createRemoteJWKSet(
+    new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+)
+const verifyToken = async (req, res, next) => {
+    const authHeader = req?.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+        const { payload } = await jwtVerify(token, JWKS);
+        next();
+    } catch (error) {
+        console.log("JWT error:", error.message);
+        return res.status(403).json({ message: "Forbidden" });
+    }
+}
 
 async function run() {
     try {
@@ -29,12 +50,22 @@ async function run() {
         const bookingCollection = db.collection('bookings');
 
         app.get('/facility', async (req, res) => {
-            const cursor = facilitiesCollection.find();
+            const { userId, search, type } = req.query;
+
+            const query = {};
+
+            if (userId) query.userId = userId;
+            if (search) query.facilityName = { $regex: search, $options: 'i' };
+            if (type) query.type = { $in: type.split(',') };
+
+            console.log("mongo query:", JSON.stringify(query));
+
+            const cursor = facilitiesCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
-        })
+        });
 
-        app.get('/facility/:id', async (req, res) => {
+        app.get('/facility/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = {
                 _id: new ObjectId(id)
@@ -43,22 +74,13 @@ async function run() {
             res.send(facility);
         })
 
-        app.get('/facility', async (req, res) => {
-            const { userId } = req.query;
-            const query = userId ? { userId } : {};
-            const cursor = facilitiesCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        })
-
-
-        app.post('/facility', async (req, res) => {
+        app.post('/facility', verifyToken, async (req, res) => {
             const facilityData = req.body;
             const result = await facilitiesCollection.insertOne(facilityData);
             res.send(result);
         })
 
-        app.patch('/facility/:id', async (req, res) => {
+        app.patch('/facility/:id', verifyToken, async (req, res) => {
             const { id } = req.params;
             const updateData = req.body;
             const result = facilitiesCollection.updateOne(
@@ -68,7 +90,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete("/facility/:id", async (req, res) => {
+        app.delete("/facility/:id", verifyToken, async (req, res) => {
             const { id } = req.params;
             const result = await facilitiesCollection.deleteOne({
                 _id: new ObjectId(id),
@@ -87,7 +109,7 @@ async function run() {
             res.send(result);
         })
 
-        app.delete('/booking/:bookingId', async (req, res) => {
+        app.delete('/booking/:bookingId', verifyToken, async (req, res) => {
             const { bookingId } = req.params;
             const result = await bookingCollection.deleteOne({
                 _id: new ObjectId(bookingId)
