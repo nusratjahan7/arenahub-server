@@ -25,7 +25,15 @@ async function run() {
     try {
         await client.connect();
         const db = client.db('arenahub');
-        const destinationCollection = db.collection('facilities');
+        const facilitiesCollection = db.collection('facilities');
+
+        app.post('/facility', async (req, res) => {
+            const facilityData = req.body;
+            const result = await facilitiesCollection.insertOne(facilityData);
+            res.send(result);
+        })
+
+
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
