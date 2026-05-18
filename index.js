@@ -27,6 +27,12 @@ async function run() {
         const db = client.db('arenahub');
         const facilitiesCollection = db.collection('facilities');
 
+        app.get('/facility', async (req, res) => {
+            const cursor = facilitiesCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
         app.post('/facility', async (req, res) => {
             const facilityData = req.body;
             const result = await facilitiesCollection.insertOne(facilityData);
