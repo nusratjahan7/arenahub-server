@@ -26,6 +26,7 @@ async function run() {
         await client.connect();
         const db = client.db('arenahub');
         const facilitiesCollection = db.collection('facilities');
+        const bookingCollection = db.collection('bookings');
 
         app.get('/facility', async (req, res) => {
             const cursor = facilitiesCollection.find();
@@ -48,6 +49,11 @@ async function run() {
             res.send(result);
         })
 
+        app.post('/booking', async (req, res) => {
+            const bookingData = req.body;
+            const result = await bookingCollection.insertOne(bookingData);
+            res.send(result);
+        })
 
 
         await client.db("admin").command({ ping: 1 });
