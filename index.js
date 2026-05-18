@@ -49,6 +49,11 @@ async function run() {
         const facilitiesCollection = db.collection('facilities');
         const bookingCollection = db.collection('bookings');
 
+        app.get('/featured', async (req, res) => {
+            const result = await facilitiesCollection.find().limit(6).toArray();
+            res.send(result);
+        })
+
         app.get('/facility', async (req, res) => {
             const { userId, search, type } = req.query;
 
