@@ -33,6 +33,15 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/facility/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: new ObjectId(id)
+            }
+            const facility = await facilitiesCollection.findOne(query);
+            res.send(facility);
+        })
+
         app.post('/facility', async (req, res) => {
             const facilityData = req.body;
             const result = await facilitiesCollection.insertOne(facilityData);
