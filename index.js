@@ -43,6 +43,15 @@ async function run() {
             res.send(facility);
         })
 
+        app.get('/facility', async (req, res) => {
+            const { userId } = req.query;
+            const query = userId ? { userId } : {};
+            const cursor = facilitiesCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+
         app.post('/facility', async (req, res) => {
             const facilityData = req.body;
             const result = await facilitiesCollection.insertOne(facilityData);
@@ -58,6 +67,14 @@ async function run() {
         app.post('/booking', async (req, res) => {
             const bookingData = req.body;
             const result = await bookingCollection.insertOne(bookingData);
+            res.send(result);
+        })
+
+        app.delete('/booking/:bookingId', async (req, res) => {
+            const { bookingId } = req.params;
+            const result = await bookingCollection.deleteOne({
+                _id: new ObjectId(bookingId)
+            })
             res.send(result);
         })
 
