@@ -58,6 +58,13 @@ async function run() {
             res.send(result);
         })
 
+        app.delete("/facility/:id", async (req, res) => {
+            const { id } = req.params;
+            const result = await facilitiesCollection.deleteOne({
+                _id: new ObjectId(id),
+            });
+            res.json(result);
+        });
         app.get('/booking/:userId', async (req, res) => {
             const { userId } = req.params;
             const result = await bookingCollection.find({ userId }).toArray();
