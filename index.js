@@ -58,6 +58,16 @@ async function run() {
             res.send(result);
         })
 
+        app.patch('/facility/:id', async (req, res) => {
+            const { id } = req.params;
+            const updateData = req.body;
+            const result = facilitiesCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: updateData }
+            )
+            res.send(result)
+        })
+
         app.delete("/facility/:id", async (req, res) => {
             const { id } = req.params;
             const result = await facilitiesCollection.deleteOne({
